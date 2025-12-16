@@ -1,0 +1,1346 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>추상전략게임 UI 프로토타입</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --accent:#22c55e;
+      --danger:#ef4444;
+
+      --tA:#38bdf8;
+      --tB:#f59e0b;
+      --tC:#a78bfa;
+      --tD:#22c55e;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif;
+      background: radial-gradient(1200px 800px at 50% 30%, #111827 0%, var(--bg) 60%);
+      color:var(--text);
+    }
+    button, select, input{font:inherit;color:inherit}
+    .app{min-height:100vh;display:flex;flex-direction:column;gap:10px;padding:10px;}
+
+    .banner{
+      background: linear-gradient(180deg, rgba(34,197,94,.18), rgba(34,197,94,.06));
+      border:1px solid rgba(34,197,94,.35);
+      border-radius:14px;
+      padding:10px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .banner .left{display:flex;flex-direction:column;gap:2px;min-width:220px;}
+    .banner .title{font-weight:800;letter-spacing:.2px;display:flex;align-items:center;gap:8px;}
+    .pill{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:3px 9px;border:1px solid rgba(255,255,255,.12);
+      border-radius:999px;color:var(--muted);font-size:12px;
+      background: rgba(255,255,255,.03);white-space:nowrap;
+    }
+    .pill strong{color:var(--text)}
+    .banner .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+    .btn{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:10px;padding:8px 10px;cursor:pointer;
+      transition: transform .05s ease, background .15s ease;
+    }
+    .btn:hover{background: rgba(255,255,255,.10)}
+    .btn:active{transform: translateY(1px)}
+    .btn.primary{background: rgba(34,197,94,.20); border-color: rgba(34,197,94,.55);}
+    .btn.danger{background: rgba(239,68,68,.18); border-color: rgba(239,68,68,.55);}
+    .btn:disabled{opacity:.45; cursor:not-allowed; transform:none;}
+
+    .camp{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .camp .campRow{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;justify-content:space-between;}
+    .camp h2{margin:0;font-size:14px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:8px;}
+    .camp h2 .dot{width:9px;height:9px;border-radius:99px;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.25);}
+    #campP2 h2 .dot{ background: rgba(167,139,250,.9); border-color: rgba(167,139,250,.9);}
+    #campP1 h2 .dot{ background: rgba(56,189,248,.9); border-color: rgba(56,189,248,.9);}
+
+    .panel{
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:12px;
+      padding:10px;
+      min-width:220px;
+      flex:1;
+    }
+    .panel h3{margin:0 0 8px 0;font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.2px;}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+    .small{font-size:12px;color:var(--muted);line-height:1.35;}
+
+    .tokenBtn{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      cursor:pointer;background: rgba(255,255,255,.06);
+      user-select:none;
+    }
+    .tokenBtn:hover{background: rgba(255,255,255,.10)}
+    .tokenBtn:active{transform: translateY(1px)}
+    .tokenBtn:disabled{opacity:.45; cursor:not-allowed; transform:none;}
+    .tokenBtn.selected{
+      outline:2px solid rgba(34,197,94,.7);
+      border-color: rgba(34,197,94,.6);
+      background: rgba(34,197,94,.12);
+    }
+    .dotTok{width:18px;height:18px;border-radius:99px;border:2px solid rgba(255,255,255,.35);box-shadow:0 6px 14px rgba(0,0,0,.25);display:inline-block;}
+    .dotTok.A{background: color-mix(in srgb, var(--tA) 30%, transparent);}
+    .dotTok.B{background: color-mix(in srgb, var(--tB) 30%, transparent);}
+    .dotTok.C{background: color-mix(in srgb, var(--tC) 30%, transparent);}
+    .dotTok.D{background: color-mix(in srgb, var(--tD) 30%, transparent);}
+    .tokLabel{font-weight:900; letter-spacing:.2px}
+    .selLine{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+    .selChip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:4px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      font-size:12px; color:var(--muted);
+    }
+    .selChip b{color:var(--text)}
+
+    .statGrid{display:grid;grid-template-columns:repeat(4, minmax(46px, 1fr));gap:8px;}
+    .stat{background: rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:8px 8px;display:flex;flex-direction:column;gap:4px;align-items:flex-start;}
+    .stat .k{font-size:12px;color:var(--muted);font-weight:700;}
+    .stat .v{font-size:16px;font-weight:900;}
+
+    .center{display:flex;flex-direction:column;gap:10px;min-height:520px;}
+    .boardWrap{
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;padding:10px;
+      display:flex;gap:10px;align-items:stretch;justify-content:center;
+    }
+    .boardArea{display:flex;flex-direction:column;gap:8px;align-items:center;}
+    .board{
+      width: min(74vw, 520px);
+      aspect-ratio:1/1;
+      display:grid;grid-template-columns:repeat(8, 1fr);grid-template-rows:repeat(8, 1fr);
+      border-radius:12px;overflow:hidden;
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow:0 10px 40px rgba(0,0,0,.35);
+    }
+    .sq{
+      position:relative;display:flex;align-items:center;justify-content:center;
+      cursor:pointer;user-select:none;border:1px solid rgba(255,255,255,.05);
+    }
+    .sq.light{background: linear-gradient(180deg, rgba(31,41,55,.95), rgba(31,41,55,.70));}
+    .sq.dark{background: linear-gradient(180deg, rgba(17,24,39,.95), rgba(17,24,39,.70));}
+    .sq:hover{filter: brightness(1.08);}
+    .coord{position:absolute;left:6px;top:4px;font-size:10px;color: rgba(255,255,255,.35);pointer-events:none;}
+
+    .tokOnBoard{
+      position:absolute;right:6px;top:6px;
+      width:14px;height:14px;border-radius:99px;
+      border:2px solid rgba(255,255,255,.35);
+      box-shadow:0 6px 14px rgba(0,0,0,.25);
+      pointer-events:none;
+    }
+    .tokOnBoard.A{background: color-mix(in srgb, var(--tA) 50%, transparent);}
+    .tokOnBoard.B{background: color-mix(in srgb, var(--tB) 50%, transparent);}
+    .tokOnBoard.C{background: color-mix(in srgb, var(--tC) 50%, transparent);}
+    .tokOnBoard.D{background: color-mix(in srgb, var(--tD) 50%, transparent);}
+
+    /* ✅ 말 크기 축소 */
+    .piece{
+      width:40%;
+      height:40%;
+      border-radius:999px;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:900;letter-spacing:.2px;
+      border:2px solid rgba(255,255,255,.28);
+      box-shadow:0 8px 18px rgba(0,0,0,.28);
+    }
+    .p1{background: rgba(56,189,248,.18); border-color: rgba(56,189,248,.60);}
+    .p2{background: rgba(167,139,250,.18); border-color: rgba(167,139,250,.60);}
+
+    .hint{outline:3px solid rgba(34,197,94,.65);outline-offset:-3px;}
+    .hintTag{
+      position:absolute;bottom:5px;right:6px;
+      font-size:10px;color: rgba(0,0,0,.85);
+      background: rgba(34,197,94,.75);
+      border-radius:999px;padding:2px 7px;font-weight:900;pointer-events:none;
+    }
+    .hintR .hintTag{background: rgba(56,189,248,.85);}
+    .hintD .hintTag{background: rgba(167,139,250,.85);}
+    .hintJ .hintTag{background: rgba(245,158,11,.90);}
+    .hintN .hintTag{background: rgba(34,197,94,.85);}
+
+    .side{width:min(420px, 100%);display:flex;flex-direction:column;gap:10px;align-items:stretch;}
+    .log{
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      padding:10px;
+      display:flex;flex-direction:column;gap:8px;
+      min-height:280px;
+    }
+    .logHead{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+    .logHead h3{margin:0;font-size:13px;color:var(--muted)}
+    textarea{
+      width:100%;min-height:210px;resize:vertical;
+      border-radius:12px;border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      padding:10px;color:var(--text);line-height:1.45;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Noto Sans Mono", monospace;
+      font-size:12px;
+    }
+
+    details{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:8px 10px;background: rgba(255,255,255,.03);}
+    details summary{cursor:pointer;color:var(--text);font-weight:700;font-size:12px;list-style:none;}
+    details summary::-webkit-details-marker{display:none}
+    .legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+    .tag{font-size:11px;padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.14);color:var(--muted);background: rgba(0,0,0,.18);}
+    .tag b{color:var(--text)}
+    .tag.r{border-color: rgba(56,189,248,.55)}
+    .tag.d{border-color: rgba(167,139,250,.55)}
+    .tag.j{border-color: rgba(245,158,11,.55)}
+    .tag.n{border-color: rgba(34,197,94,.55)}
+
+    .modal{position:fixed; inset:0;background: rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:50;}
+    .modal.open{display:flex;}
+    .modalCard{
+      width:min(860px, 100%);
+      max-height:min(90vh, 900px);
+      overflow:auto;
+      background: linear-gradient(180deg, rgba(17,24,39,.98), rgba(15,23,42,.96));
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:16px;
+      padding:14px;
+      box-shadow:0 20px 60px rgba(0,0,0,.45);
+    }
+    .modalHead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px;}
+    .modalHead h2{margin:0;font-size:16px;}
+    .modalBody{color: rgba(229,231,235,.92);line-height:1.55;font-size:13px;}
+
+    .vcGrid{display:grid;grid-template-columns:repeat(2, minmax(240px, 1fr));gap:10px;margin-top:10px;}
+    .vc{border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px;background: rgba(255,255,255,.03);display:flex;flex-direction:column;gap:8px;}
+    .vc .name{display:flex;justify-content:space-between;gap:8px;align-items:baseline;font-weight:900;}
+    .vc .targets{display:flex;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:12px;}
+    .vc .pickRow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .vcPicked{display:flex;flex-direction:column;gap:6px;font-size:12px;}
+
+    .scoreTable{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px;}
+    .scoreTable th, .scoreTable td{padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.10);text-align:left;}
+    .scoreTable th{color:var(--muted);font-weight:800;}
+    .winner{margin-top:10px;padding:10px;border-radius:14px;border:1px solid rgba(34,197,94,.45);background: rgba(34,197,94,.10);font-weight:900;}
+
+    @media (max-width: 980px){
+      .boardWrap{flex-direction:column;}
+      .side{width:100%;}
+      .board{width: min(94vw, 520px);}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="banner">
+    <div class="left">
+      <div class="title">
+        <span>추상전략게임 UI</span>
+        <span class="pill" id="phasePill"><strong>상태</strong> · 준비</span>
+      </div>
+      <div class="small" id="statusLine"></div>
+    </div>
+    <div class="right">
+      <button class="btn" id="btnRules">규칙</button>
+      <button class="btn" id="btnScore" disabled>점수</button>
+      <button class="btn" id="btnCopyLog">기보 복사</button>
+      <button class="btn danger" id="btnReset">초기화</button>
+    </div>
+  </div>
+
+  <div class="camp" id="campP2">
+    <div class="campRow">
+      <h2><span class="dot"></span>후수 진영(P2)</h2>
+      <span class="pill" id="p2TurnPill"><strong>P2</strong> · 대기</span>
+    </div>
+    <div class="campRow">
+      <div class="panel">
+        <h3>1라운드: 토큰 선택</h3>
+        <div class="row" id="p2TokenButtons"></div>
+        <div class="selLine">
+          <span class="selChip">P2 선택: <span class="dotTok A" id="p2SelDot"></span><b id="p2SelTxt">A</b></span>
+        </div>
+        <div class="small" id="p2PlacementInfo"></div>
+      </div>
+      <div class="panel">
+        <h3>보유 토큰</h3>
+        <div class="statGrid" id="p2TokenStats"></div>
+        <div class="small" id="p2ActionInfo"></div>
+      </div>
+      <div class="panel">
+        <h3>목표</h3>
+        <div class="vcPicked" id="p2VC">미선택</div>
+      </div>
+      <div class="panel">
+        <h3>말 위치</h3>
+        <div class="small" id="p2PiecesList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="center">
+    <div class="boardWrap">
+      <div class="boardArea">
+        <div class="pill" id="turnIndicator"><strong>차례</strong> · -</div>
+        <div class="board" id="board"></div>
+        <details>
+          <summary>이동 표시 범례</summary>
+          <div class="legend">
+            <span class="tag r"><b>R</b> 상하좌우 1-2</span>
+            <span class="tag d"><b>D</b> 대각 1-2</span>
+            <span class="tag j"><b>J</b> 점프 (2,1)</span>
+            <span class="tag n"><b>N</b> 인접 1</span>
+          </div>
+        </details>
+      </div>
+
+      <div class="side">
+        <div class="log">
+          <div class="logHead">
+            <h3>기보</h3>
+            <div class="row">
+              <button class="btn" id="btnUndo" disabled>되돌리기</button>
+              <button class="btn" id="btnExport" disabled>TXT 저장</button>
+            </div>
+          </div>
+          <textarea id="logText" spellcheck="false" readonly></textarea>
+          <details>
+            <summary>기보 표기법</summary>
+            <div class="small" style="margin-top:8px;">
+              <b>설치</b> R1 P1: A@c3 B@d4 ...<br/>
+              <b>목표</b> GOAL P2→H1(10)<br/>
+              <b>이동</b> R2 P1: a1-c2[N]{B} ...<br/><br/>
+              <b>모드</b>: R(상하좌우), D(대각), J(점프), N(인접)
+            </div>
+          </details>
+        </div>
+
+        <div class="panel">
+          <h3>2-4라운드: 이동</h3>
+          <div class="row">
+            <button class="btn primary" id="btnEndMove" disabled>이동 종료</button>
+          </div>
+          <div class="small" id="moveInfo" style="margin-top:8px;"></div>
+          <div class="small" id="moveHint" style="margin-top:6px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="camp" id="campP1">
+    <div class="campRow">
+      <h2><span class="dot"></span>선수 진영(P1)</h2>
+      <span class="pill" id="p1TurnPill"><strong>P1</strong> · 대기</span>
+    </div>
+    <div class="campRow">
+      <div class="panel">
+        <h3>1라운드: 토큰 선택</h3>
+        <div class="row" id="p1TokenButtons"></div>
+        <div class="selLine">
+          <span class="selChip">P1 선택: <span class="dotTok A" id="p1SelDot"></span><b id="p1SelTxt">A</b></span>
+        </div>
+        <div class="small" id="p1PlacementInfo"></div>
+      </div>
+      <div class="panel">
+        <h3>보유 토큰</h3>
+        <div class="statGrid" id="p1TokenStats"></div>
+        <div class="small" id="p1ActionInfo"></div>
+      </div>
+      <div class="panel">
+        <h3>목표</h3>
+        <div class="vcPicked" id="p1VC">미선택</div>
+      </div>
+      <div class="panel">
+        <h3>말 위치</h3>
+        <div class="small" id="p1PiecesList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="rulesModal" role="dialog" aria-modal="true">
+  <div class="modalCard">
+    <div class="modalHead">
+      <h2>규칙</h2>
+      <button class="btn" id="btnCloseRules">닫기</button>
+    </div>
+    <div class="modalBody" id="rulesBody"></div>
+  </div>
+</div>
+
+<div class="modal" id="vcModal" role="dialog" aria-modal="true">
+  <div class="modalCard">
+    <div class="modalHead">
+      <h2 id="vcTitle">목표 선택</h2>
+      <button class="btn" id="btnCloseVC" disabled>닫기</button>
+    </div>
+    <div class="modalBody">
+      <div class="small" id="vcInstr"></div>
+      <div class="vcGrid" id="vcGrid"></div>
+      <div class="small" style="margin-top:10px;" id="vcPickedLine"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="scoreModal" role="dialog" aria-modal="true">
+  <div class="modalCard">
+    <div class="modalHead">
+      <h2>점수 계산</h2>
+      <button class="btn" id="btnCloseScore">닫기</button>
+    </div>
+    <div class="modalBody" id="scoreBody"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const TOKEN_TYPES = ["A","B","C","D"];
+  const files = ["a","b","c","d","e","f","g","h"];
+  const ROUND_MAX = 8;
+  const TURN_MAX = 4;
+
+  const GOALS = [
+    { id:"H1", desc:"A, B 중심 / C, D 목표 0", target:{A:16,B:14,C:0,D:0}, score:10 },
+    { id:"H2", desc:"C, D 중심 / A, B 목표 0", target:{A:0,B:0,C:15,D:15}, score:9 },
+    { id:"M2", desc:"B 목표 0 / A 중심",        target:{A:10,B:0,C:6,D:4}, score:8 },
+    { id:"M1", desc:"D 목표 0 / 균형",          target:{A:7,B:7,C:6,D:0}, score:7 },
+    { id:"L2", desc:"한 종류 중심",             target:{A:9,B:5,C:5,D:5}, score:5 },
+    { id:"L1", desc:"완전 균형",                target:{A:6,B:6,C:6,D:6}, score:4 },
+  ];
+
+  const state = {
+    phase: "R1_PLACE",
+    round: 1,
+    activePlayer: 1,
+    selectedTokenType: {1:"A", 2:"A"},
+    r1: {
+      turnIndex: 0,
+      placementsLeft: 8,
+      perTypeThisTurn: {A:0,B:0,C:0,D:0},
+      placementsThisTurn: [],
+      tokenRemaining: {A:16,B:16,C:16,D:16},
+    },
+    boardTokens: Array.from({length:8}, _ => Array(8).fill(null)),
+    pieces: [
+      {id:"P1", player:1, x:0, y:0},
+      {id:"P2", player:2, x:7, y:7},
+    ],
+    inv: { 1:{A:0,B:0,C:0,D:0}, 2:{A:0,B:0,C:0,D:0} },
+    goalPicked: {1:null, 2:null},
+    move: {
+      firstPlayerFromGoal: null,
+      actionsUsed: {1:0, 2:0},        // 라운드 내 사용 이동(최대 12)
+      turnMovesThisTurn: [],          // 현재 구간(자발/추가) 이동 기록
+      turnLocked: false,              // 자발 이동이 4회 도달 시 잠금
+      turnMode: "VOL",                // "VOL" | "FORCED"
+      volCount: 0,                    // 현재 자발 턴에서 수행한 이동 수(1-4)
+      cycleStarter: 1,                // (자발) 이번 사이클 시작 플레이어
+      cycleVol: {1:null, 2:null},     // 사이클 내 자발 이동 수 기록
+      forced: {player:null, remaining:0, afterNext: null} // 추가 행동 구간
+    },
+    winner: null,
+    gameOverReason: "",
+    log: [],
+    undoStack: [],
+  };
+
+  const el = (id)=>document.getElementById(id);
+
+  const boardEl = el("board");
+  const logEl = el("logText");
+
+  const p1TokenButtons = el("p1TokenButtons");
+  const p2TokenButtons = el("p2TokenButtons");
+  const p1PlacementInfo = el("p1PlacementInfo");
+  const p2PlacementInfo = el("p2PlacementInfo");
+  const p1SelDot = el("p1SelDot");
+  const p2SelDot = el("p2SelDot");
+  const p1SelTxt = el("p1SelTxt");
+  const p2SelTxt = el("p2SelTxt");
+
+  const p1TokenStats = el("p1TokenStats");
+  const p2TokenStats = el("p2TokenStats");
+
+  const p1PiecesList = el("p1PiecesList");
+  const p2PiecesList = el("p2PiecesList");
+
+  const p1Goal = el("p1VC");
+  const p2Goal = el("p2VC");
+
+  const phasePill = el("phasePill");
+  const turnIndicator = el("turnIndicator");
+  const statusLine = el("statusLine");
+  const p1TurnPill = el("p1TurnPill");
+  const p2TurnPill = el("p2TurnPill");
+
+  const btnRules = el("btnRules");
+  const rulesModal = el("rulesModal");
+  const btnCloseRules = el("btnCloseRules");
+  const rulesBody = el("rulesBody");
+
+  const goalModal = el("vcModal");
+  const goalGrid = el("vcGrid");
+  const goalTitle = el("vcTitle");
+  const goalInstr = el("vcInstr");
+  const goalPickedLine = el("vcPickedLine");
+
+  const btnEndMove = el("btnEndMove");
+  const moveInfo = el("moveInfo");
+  const moveHint = el("moveHint");
+
+  const btnScore = el("btnScore");
+  const scoreModal = el("scoreModal");
+  const btnCloseScore = el("btnCloseScore");
+  const scoreBody = el("scoreBody");
+
+  const btnReset = el("btnReset");
+  const btnCopyLog = el("btnCopyLog");
+  const btnUndo = el("btnUndo");
+  const btnExport = el("btnExport");
+
+  let hintMap = new Map(); // "x,y" -> mode
+
+  const deepCopy = (o)=>JSON.parse(JSON.stringify(o));
+  function deepSnap(){
+    return deepCopy({
+      phase: state.phase, round: state.round, activePlayer: state.activePlayer,
+      selectedTokenType: state.selectedTokenType,
+      r1: state.r1,
+      boardTokens: state.boardTokens,
+      pieces: state.pieces,
+      inv: state.inv,
+      goalPicked: state.goalPicked,
+      move: state.move,
+      winner: state.winner,
+      gameOverReason: state.gameOverReason,
+      log: state.log
+    });
+  }
+  function pushUndo(){ state.undoStack.push(deepSnap()); renderAll(); }
+  function popUndo(){
+    const snap = state.undoStack.pop();
+    if(!snap) return;
+    Object.assign(state, deepCopy(snap));
+    hintMap.clear();
+    renderAll();
+  }
+  function addLog(line){
+    state.log.push(line);
+    logEl.value = state.log.join("\n");
+    logEl.scrollTop = logEl.scrollHeight;
+    renderAll();
+  }
+
+  function setSelectedChip(){
+    const s1 = state.selectedTokenType[1];
+    const s2 = state.selectedTokenType[2];
+    p1SelTxt.textContent = s1;
+    p2SelTxt.textContent = s2;
+    p1SelDot.className = `dotTok ${s1}`;
+    p2SelDot.className = `dotTok ${s2}`;
+  }
+
+  function setPills(){
+    const phaseLabel = ({
+      "R1_PLACE":"1라운드(토큰 설치)",
+      "GOAL_PICK":"목표 선택",
+      "MOVE_PLAY":`${state.round}라운드(이동)`,
+      "GAME_OVER":"종료"
+    })[state.phase] || state.phase;
+
+    phasePill.innerHTML = `<strong>상태</strong> · ${phaseLabel}`;
+    turnIndicator.innerHTML = `<strong>차례</strong> · ${state.activePlayer === 1 ? "P1" : "P2"}`;
+
+    p1TurnPill.innerHTML = `<strong>P1</strong> · ${state.activePlayer === 1 ? "진행" : "대기"}`;
+    p2TurnPill.innerHTML = `<strong>P2</strong> · ${state.activePlayer === 2 ? "진행" : "대기"}`;
+
+    if(state.phase === "R1_PLACE"){
+      statusLine.textContent = `토큰 설치 단계입니다. 현재 차례: P${state.activePlayer}.`;
+    } else if(state.phase === "GOAL_PICK"){
+      statusLine.textContent = "목표를 선택하십시오. 선택 순서는 P2, P1입니다.";
+    } else if(state.phase === "MOVE_PLAY"){
+      statusLine.textContent = `이동 단계입니다. 각 라운드에서 플레이어별 최대 8회 이동할 수 있으며, 각 턴에서 최대 4회 이동할 수 있습니다.`;
+    } else if(state.phase === "GAME_OVER"){
+      statusLine.textContent = `게임이 종료되었습니다. ${state.gameOverReason}`;
+    }
+  }
+
+  function renderTokenButtons(){
+    function makeButtons(container){
+      container.innerHTML = "";
+      TOKEN_TYPES.forEach(t=>{
+        const b = document.createElement("button");
+        b.className = "tokenBtn";
+        b.type = "button";
+        b.innerHTML = `<span class="dotTok ${t}"></span><span class="tokLabel">${t}</span>`;
+        b.onclick = (ev) => {
+          ev.preventDefault();
+          if(state.phase !== "R1_PLACE") return;
+          state.selectedTokenType[state.activePlayer] = t;
+          renderAll();
+        };
+        if(state.phase === "R1_PLACE" && state.selectedTokenType[state.activePlayer] === t) b.classList.add("selected");
+        b.disabled = (state.phase !== "R1_PLACE") || (state.r1.tokenRemaining[t] <= 0);
+        container.appendChild(b);
+      });
+    }
+    makeButtons(p1TokenButtons);
+    makeButtons(p2TokenButtons);
+
+    if(state.phase === "R1_PLACE"){
+      const info = `잔여 설치: ${state.r1.placementsLeft}/8 · 이번 턴 타입별: A${state.r1.perTypeThisTurn.A} B${state.r1.perTypeThisTurn.B} C${state.r1.perTypeThisTurn.C} D${state.r1.perTypeThisTurn.D}`;
+      p1PlacementInfo.textContent = state.activePlayer === 1 ? info : "";
+      p2PlacementInfo.textContent = state.activePlayer === 2 ? info : "";
+    } else {
+      p1PlacementInfo.textContent = "";
+      p2PlacementInfo.textContent = "";
+    }
+  }
+
+  function renderTokenStats(){
+    const makeStats = (container, player)=>{
+      container.innerHTML = "";
+      TOKEN_TYPES.forEach(t=>{
+        const d = document.createElement("div");
+        d.className = "stat";
+        d.innerHTML = `<div class="k">${t}</div><div class="v">${state.inv[player][t]}</div>`;
+        container.appendChild(d);
+      });
+    };
+    makeStats(p1TokenStats, 1);
+    makeStats(p2TokenStats, 2);
+
+    if(state.phase === "MOVE_PLAY"){
+      el("p1ActionInfo").textContent = `라운드 ${state.round}: 자발 이동 ${state.move.actionsUsed[1]}/${ROUND_MAX}`;
+      el("p2ActionInfo").textContent = `라운드 ${state.round}: 자발 이동 ${state.move.actionsUsed[2]}/${ROUND_MAX}`;
+    } else {
+      el("p1ActionInfo").textContent = "";
+      el("p2ActionInfo").textContent = "";
+    }
+  }
+
+  function renderGoal(){
+    const pickedHTML = (player)=>{
+      const pick = state.goalPicked[player];
+      if(!pick) return "미선택";
+      const g = GOALS.find(v=>v.id===pick);
+      return `
+        <div><b>${g.id}</b> (점수 ${g.score})</div>
+        <div class="small">목표: A${g.target.A} B${g.target.B} C${g.target.C} D${g.target.D}</div>
+      `;
+    };
+    p1Goal.innerHTML = pickedHTML(1);
+    p2Goal.innerHTML = pickedHTML(2);
+  }
+
+  function renderPiecesList(){
+    const p1 = state.pieces.find(p=>p.player===1);
+    const p2 = state.pieces.find(p=>p.player===2);
+    p1PiecesList.innerHTML = `P1: <b>${files[p1.x]}${p1.y+1}</b>`;
+    p2PiecesList.innerHTML = `P2: <b>${files[p2.x]}${p2.y+1}</b>`;
+  }
+
+  function pieceAt(x,y){ return state.pieces.find(p=>p.x===x && p.y===y) || null; }
+  function activePiece(){ return state.pieces.find(p=>p.player===state.activePlayer); }
+
+  function renderBoard(){
+    boardEl.innerHTML = "";
+    for(let y=7;y>=0;y--){
+      for(let x=0;x<8;x++){
+        const sq = document.createElement("div");
+        sq.className = "sq " + (((x+y)%2===0) ? "light" : "dark");
+        sq.onclick = () => onSquareClick(x,y);
+
+        const coord = document.createElement("div");
+        coord.className = "coord";
+        coord.textContent = `${files[x]}${y+1}`;
+        sq.appendChild(coord);
+
+        const tok = state.boardTokens[y][x];
+        if(tok){
+          const t = document.createElement("div");
+          t.className = `tokOnBoard ${tok}`;
+          t.title = `토큰 ${tok}`;
+          sq.appendChild(t);
+        }
+
+        const pc = pieceAt(x,y);
+        if(pc){
+          const p = document.createElement("div");
+          p.className = "piece " + (pc.player===1?"p1":"p2");
+          p.textContent = "●";
+          p.title = pc.id;
+          sq.appendChild(p);
+        }
+
+        const key = `${x},${y}`;
+        if(hintMap.has(key)){
+          const mode = hintMap.get(key);
+          sq.classList.add("hint");
+          if(mode === "R") sq.classList.add("hintR");
+          if(mode === "D") sq.classList.add("hintD");
+          if(mode === "J") sq.classList.add("hintJ");
+          if(mode === "N") sq.classList.add("hintN");
+          const ht = document.createElement("div");
+          ht.className = "hintTag";
+          ht.textContent = mode;
+          sq.appendChild(ht);
+        }
+
+        boardEl.appendChild(sq);
+      }
+    }
+  }
+
+  function renderMovePanel(){
+    if(state.phase !== "MOVE_PLAY"){
+      btnEndMove.disabled = true;
+      moveInfo.textContent = "이동 단계가 시작되면 활성화됩니다.";
+      moveHint.textContent = "";
+      return;
+    }
+
+    const remainRound = ROUND_MAX - state.move.actionsUsed[state.activePlayer];
+
+    if(state.move.turnMode === "FORCED"){
+      btnEndMove.disabled = true;
+      const rem = state.move.forced.remaining;
+      moveInfo.innerHTML = `현재 차례: <b>P${state.activePlayer}</b> · 라운드 ${state.round} 잔여 이동 <b>${remainRound}</b> · 추가 이동 잔여 <b>${rem}</b>`;
+      moveHint.textContent = "추가 이동 구간입니다. 표시된 횟수만큼 이동해야 하며, ‘이동 종료’를 사용할 수 없습니다.";
+      return;
+    }
+
+    // VOL
+    const remainVol = TURN_MAX - state.move.volCount;
+    const locked = state.move.turnLocked ? " (턴 이동 한도 도달)" : "";
+    btnEndMove.disabled = (state.move.volCount < 1);
+
+    const extraNow = (state.move.turnMode === "FORCED") ? state.move.forced.remaining : 0;
+    moveInfo.innerHTML = `현재 차례: <b>P${state.activePlayer}</b> · 라운드 ${state.round} 잔여 이동 <b>${remainRound}</b> · 자발 이동 잔여 <b>${Math.max(0, remainVol)}</b>${locked} · 추가 이동 잔여 <b>${extraNow}</b>`;
+    moveHint.textContent = "토큰이 존재하는 칸으로만 이동할 수 있습니다. 임의의 칸을 클릭하면 합법 이동인 경우 즉시 이동합니다. 말(●)을 클릭하면 이동 가능 칸이 표시됩니다. 자발 이동은 1-4회 수행한 뒤 ‘이동 종료’를 누르십시오.";
+  }
+
+  function renderAll(){
+    setSelectedChip();
+    setPills();
+    renderTokenButtons();
+    renderTokenStats();
+    renderGoal();
+    renderPiecesList();
+    renderBoard();
+    renderMovePanel();
+    btnScore.disabled = state.phase !== "GAME_OVER";
+    btnUndo.disabled = state.undoStack.length === 0;
+    btnExport.disabled = state.log.length === 0;
+  }
+
+  function renderRulesText(){
+    rulesBody.innerHTML = `
+      <b>구성</b><br/>
+      • 보드: 8×8<br/>
+      • 말: 각 플레이어 1개(P1은 a1, P2는 h8에서 시작)<br/>
+      • 토큰: A/B/C/D 각 16개, 총 64개(보드의 모든 칸 수와 동일)<br/><br/>
+
+      <b>1라운드: 토큰 설치</b><br/>
+      • 턴제 방식으로 진행합니다(P1 선).<br/>
+      • 각 턴에 반드시 8개의 토큰을 설치합니다.<br/>
+      • 한 턴에서 같은 종류의 토큰은 최대 2개까지만 설치할 수 있습니다.<br/>
+      • 이미 토큰이 설치된 칸에는 설치할 수 없습니다.<br/>
+      • 모든 설치 턴이 종료되면 1라운드를 종료합니다.<br/><br/>
+
+      <b>목표 선택</b><br/>
+      • 1라운드 종료 후, 목표 6개 중 1개를 각자 선택합니다.<br/>
+      • 선택 순서는 P2, P1입니다.<br/>
+      • 목표의 점수는 2-4라운드 선공(고정)을 결정하는 용도로만 사용합니다.<br/>
+      • 점수가 높은 플레이어가 2-4라운드 선공이며, 동점인 경우 P1이 선공입니다.<br/><br/>
+
+      <b>2-4라운드: 이동 및 획득</b><br/>
+      • 각 라운드에서 플레이어별 최대 8회 이동할 수 있습니다.<br/>
+      • 각 턴에서 최대 4회 이동할 수 있습니다. 4회 이동 후에는 ‘이동 종료’를 눌러야 합니다.<br/>
+      • 토큰이 존재하는 칸으로만 이동할 수 있으며, 착지한 토큰 1개를 즉시 획득합니다.<br/>
+      <br/>
+      <b>추가 행동</b><br/>
+      • 두 플레이어가 각각 자발 턴을 종료한 뒤, 자발 이동 수를 비교합니다.<br/>
+      • 추가 수 = (더 많은 수 - 더 적은 수) / 2 (행동은 정수이므로 소수점이 발생하면 올림 처리합니다).<br/>
+      • 추가 수를 얻는 플레이어는 더 적은 수를 둔 플레이어입니다.<br/>
+      • 추가 행동 구간에서는 ‘이동 종료’를 사용할 수 없으며, 표시된 횟수만큼 이동해야 합니다.<br/>      • 추가 이동은 라운드 최대 이동 수(자발 이동 한도)에 포함되지 않습니다.<br/>
+
+      • 자발 이동 수 비교는 자발 이동만 사용하며, 추가 행동은 비교에 포함되지 않습니다.<br/>
+      • 차례가 시작되었을 때 합법 이동이 존재하지 않으면, 해당 플레이어는 즉시 패배합니다.<br/><br/>
+
+      <b>이동 규칙(말 1개)</b><br/>
+      • N: 인접 1칸(상하좌우 및 대각)<br/>
+      • R: 상하좌우 1-2칸(중간 칸에 말이 있으면 통과 불가)<br/>
+      • D: 대각 1-2칸(중간 칸에 말이 있으면 통과 불가)<br/>
+      • J: 점프(2,1) 형태(나이트와 유사)<br/><br/>
+
+      <b>종료 및 점수</b><br/>
+      • 4라운드 종료 시, 각자 선택한 목표에 대한 ‘거리’를 비교하여 승패를 결정합니다.<br/>
+      • 거리 = Σ(2×부족 S + 1×초과 E). 부족이 초과보다 더 큰 불이익이며, 초과도 불이익이 존재합니다.<br/>
+    `;
+  }
+
+  // ===== 목표 선택 모달 =====
+  function openGoalModal(){
+    goalModal.classList.add("open");
+    const nextPicker = state.goalPicked[2] ? 1 : 2;
+    goalTitle.textContent = `목표 선택 (현재: P${nextPicker})`;
+    goalInstr.textContent = nextPicker === 2 ? "후수(P2)가 먼저 선택하십시오." : "선수(P1)가 선택하십시오.";
+
+    goalGrid.innerHTML = "";
+    GOALS.forEach(g=>{
+      const card = document.createElement("div");
+      card.className = "vc";
+      card.innerHTML = `
+        <div class="name"><span>${g.id}</span><span class="pill"><strong>점수</strong> · ${g.score}</span></div>
+        <div class="small">${g.desc}</div>
+        <div class="targets"><span><b>목표</b> A${g.target.A} · B${g.target.B} · C${g.target.C} · D${g.target.D}</span></div>
+        <div class="pickRow">
+          <span class="small">선택 즉시 공개</span>
+          <button class="btn primary" type="button">선택</button>
+        </div>
+      `;
+      card.querySelector("button").onclick = () => pickGoal(g.id);
+      goalGrid.appendChild(card);
+    });
+
+    goalPickedLine.innerHTML = `선택 현황: <b>P2=${state.goalPicked[2] ?? "-"}</b> · <b>P1=${state.goalPicked[1] ?? "-"}</b>`;
+  }
+
+  function pickGoal(id){
+    const picker = state.goalPicked[2] ? 1 : 2;
+    state.goalPicked[picker] = id;
+    const g = GOALS.find(v=>v.id===id);
+    addLog(`GOAL P${picker}→${g.id}(${g.score})`);
+
+    if(state.goalPicked[2] && state.goalPicked[1]){
+      const g2 = GOALS.find(v=>v.id===state.goalPicked[2]);
+      const g1 = GOALS.find(v=>v.id===state.goalPicked[1]);
+      let first = 1;
+      if(g2.score > g1.score) first = 2;
+      else if(g2.score < g1.score) first = 1;
+      else first = 1;
+
+      state.move.firstPlayerFromGoal = first;
+      state.phase = "MOVE_PLAY";
+      state.round = 2;
+
+      startNewMoveRound();
+      setActivePlayer(first, "VOL");
+
+      autoPickupUnderPieces();
+      addLog(`R2 시작: 선공=P${first} (2-4라운드 고정)`);
+
+      goalModal.classList.remove("open");
+      renderAll();
+    } else {
+      openGoalModal();
+    }
+  }
+
+  // ===== 이동 규칙 =====
+  function hasToken(x,y){
+    return state.boardTokens[y][x] !== null;
+  }
+
+  function legalMovesForPiece(pc){
+    const moves = [];
+    const occupied = new Set(state.pieces.map(p=>`${p.x},${p.y}`));
+    const add = (x,y,mode) => {
+      if(x<0||x>7||y<0||y>7) return;
+      if(occupied.has(`${x},${y}`)) return;
+      // ✅ 토큰이 있는 칸으로만 이동 가능
+      if(!hasToken(x,y)) return;
+      moves.push({x,y,mode});
+    };
+
+    // N: 인접 1
+    for(let dx=-1; dx<=1; dx++){
+      for(let dy=-1; dy<=1; dy++){
+        if(dx===0 && dy===0) continue;
+        add(pc.x+dx, pc.y+dy, "N");
+      }
+    }
+
+    // J: 점프(2,1)
+    [[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]].forEach(([dx,dy])=>add(pc.x+dx, pc.y+dy, "J"));
+
+    // R: 상하좌우 1-2
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{
+      for(let step=1; step<=2; step++){
+        const x = pc.x + dx*step, y = pc.y + dy*step;
+        if(x<0||x>7||y<0||y>7) break;
+        if(occupied.has(`${x},${y}`)) break;
+        // 경로 중간에 다른 말이 있는지만 고려(현재는 말 2개이므로 충분)
+        // 목적지 토큰 여부는 add에서 검증
+        add(x,y,"R");
+      }
+    });
+
+    // D: 대각 1-2
+    [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([dx,dy])=>{
+      for(let step=1; step<=2; step++){
+        const x = pc.x + dx*step, y = pc.y + dy*step;
+        if(x<0||x>7||y<0||y>7) break;
+        if(occupied.has(`${x},${y}`)) break;
+        add(x,y,"D");
+      }
+    });
+
+    return moves;
+  }
+
+  function anyLegalMove(player){
+    const pc = state.pieces.find(p=>p.player===player);
+    return legalMovesForPiece(pc).length > 0;
+  }
+
+  function computeHints(pc){
+    hintMap.clear();
+    legalMovesForPiece(pc).forEach(m=>{
+      hintMap.set(`${m.x},${m.y}`, m.mode);
+    });
+  }
+  function clearHints(){ hintMap.clear(); }
+
+
+  function flushSegment(prefix){
+    // 현재 구간(자발/추가)에서 이동이 있었다면 기보에 기록합니다.
+    const mv = state.move.turnMovesThisTurn;
+    if(!mv || mv.length === 0) return;
+    const line = mv.join(" ");
+    addLog(`R${state.round} ${prefix}: ${line}`);
+    state.move.turnMovesThisTurn = [];
+  }
+
+  function startNewCycle(){
+    state.move.cycleVol = {1:null, 2:null};
+    // 두 번의 자발 턴이 지나면 시작 플레이어로 돌아옵니다.
+    setActivePlayer(state.move.cycleStarter, "VOL");
+  }
+
+  function maybeStartForcedOrNextCycle(){
+    const v1 = state.move.cycleVol[1];
+    const v2 = state.move.cycleVol[2];
+    if(v1 === null || v2 === null) return;
+
+    if(v1 === v2){
+      startNewCycle();
+      return;
+    }
+
+    const more = Math.max(v1, v2);
+    const less = Math.min(v1, v2);
+
+    // ✅ 요구 계산법: (더 많은 수 - 더 적은 수) / 2
+    // 행동은 정수이므로 소수점이 발생하면 올림 처리합니다.
+    const extra = Math.ceil((more - less) / 2);
+
+    const extraPlayer = (v1 < v2) ? 1 : 2;
+    if(extra <= 0){
+      startNewCycle();
+      return;
+    }
+
+    state.move.forced.player = extraPlayer;
+    state.move.forced.remaining = extra;
+    state.move.forced.afterNext = state.move.cycleStarter;
+
+    setActivePlayer(extraPlayer, "FORCED");
+  }
+
+  function autoPickupUnderPieces(){
+    state.pieces.forEach(pc=>{
+      const tok = state.boardTokens[pc.y][pc.x];
+      if(tok){
+        state.inv[pc.player][tok]++;
+        state.boardTokens[pc.y][pc.x] = null;
+        addLog(`R2 자동획득: ${pc.id}@${files[pc.x]}${pc.y+1}→{${tok}}`);
+      }
+    });
+  }
+
+  function startNewMoveRound(){
+    state.move.actionsUsed = {1:0, 2:0};
+    state.move.turnMovesThisTurn = [];
+    state.move.turnLocked = false;
+
+    state.move.turnMode = "VOL";
+    state.move.volCount = 0;
+    state.move.cycleStarter = state.move.firstPlayerFromGoal ?? 1;
+    state.move.cycleVol = {1:null, 2:null};
+    state.move.forced = {player:null, remaining:0, afterNext: null};
+
+    clearHints();
+  }
+
+  function setActivePlayer(player, mode){
+    state.activePlayer = player;
+
+    if(mode) state.move.turnMode = mode;
+
+    state.move.turnMovesThisTurn = [];
+    state.move.turnLocked = false;
+
+    if(state.move.turnMode === "VOL"){
+      state.move.volCount = 0;
+    }
+
+    clearHints();
+
+    if(state.phase === "MOVE_PLAY"){
+      if(!anyLegalMove(player)){
+        endGame(3-player, `P${player} 이동 불가`);
+      }
+    }
+  }
+
+  function endTurn(){
+    if(state.phase !== "MOVE_PLAY") return;
+
+    // 추가 행동 구간에서는 종료할 수 없습니다.
+    if(state.move.turnMode === "FORCED") return;
+
+    // 자발 이동은 1-4회여야 합니다.
+    if(state.move.volCount < 1) return;
+
+    // 자발 구간 기보 기록
+    flushSegment(`P${state.activePlayer}`);
+
+    // 자발 이동 수 기록(사이클)
+    state.move.cycleVol[state.activePlayer] = state.move.volCount;
+
+    // 다음 플레이어로 자발 턴을 넘기거나, 추가 행동을 시작합니다.
+    const other = (state.activePlayer === 1 ? 2 : 1);
+
+    if(state.move.cycleVol[other] === null){
+      setActivePlayer(other, "VOL");
+    } else {
+      maybeStartForcedOrNextCycle();
+    }
+
+    renderAll();
+  }
+
+  function endRound(){
+    addLog(`R${state.round} 종료`);
+    if(state.round >= 4){
+      computeAndEndGame();
+      return;
+    }
+    state.round++;
+    startNewMoveRound();
+    addLog(`R${state.round} 시작`);
+    setActivePlayer(state.move.firstPlayerFromGoal ?? 1, "VOL");
+  }
+
+  function doMove(toX, toY, mode){
+    const player = state.activePlayer;
+    const pc = activePiece();
+    if(!pc || pc.player !== player) return;
+
+    // 라운드 잔여 체크
+    const remainRound = ROUND_MAX - state.move.actionsUsed[player];
+    // 자발 이동 한도(라운드 최대)만 적용합니다. 추가 행동은 한도에 포함되지 않습니다.
+    if(state.move.turnMode === "VOL" && remainRound <= 0){
+      flushSegment(`P${player}`);
+      endRound();
+      return;
+    }
+
+    // VOL: 최대 4회, FORCED: 남은 추가 횟수만큼 강제
+    if(state.move.turnMode === "VOL"){
+      if(state.move.turnLocked) return;
+      if(state.move.volCount >= TURN_MAX){
+        state.move.turnLocked = true;
+        renderAll();
+        return;
+      }
+    } else {
+      if(state.move.forced.remaining <= 0) return;
+    }
+
+    pushUndo();
+
+    const fromSq = `${files[pc.x]}${pc.y+1}`;
+    const toSq = `${files[toX]}${toY+1}`;
+    pc.x = toX; pc.y = toY;
+
+    let captured = "";
+    const tok = state.boardTokens[toY][toX];
+    if(tok){
+      state.inv[player][tok]++;
+      state.boardTokens[toY][toX] = null;
+      captured = `{${tok}}`;
+    }
+
+    if(state.move.turnMode === "VOL") state.move.actionsUsed[player]++;
+    state.move.turnMovesThisTurn.push(`${fromSq}-${toSq}[${mode}]${captured}`);
+
+    clearHints();
+
+    if(state.move.turnMode === "VOL"){
+      state.move.volCount++;
+      if(state.move.volCount >= TURN_MAX){
+        state.move.turnLocked = true;
+      }
+    } else {
+      state.move.forced.remaining--;
+    }
+
+    renderAll();
+
+    // 이동 후 즉시 이동 불가가 되면 패배(추가 구간에서도 동일)
+    if(anyLegalMove(player) === false){
+      endGame(3-player, `P${player} 이동 불가`);
+      return;
+    }
+
+    // 자발 이동 한도 도달 시 라운드 종료(추가 행동은 한도에 포함되지 않음)
+    if(state.move.turnMode === "VOL" && state.move.actionsUsed[player] >= ROUND_MAX){
+      flushSegment(`P${player}`);
+      // 추가 구간 중이라도 라운드 종료가 우선입니다.
+      state.move.forced = {player:null, remaining:0, afterNext: null};
+      state.move.cycleVol = {1:null, 2:null};
+      state.move.turnMode = "VOL";
+      endRound();
+      return;
+    }
+
+    // FORCED 구간이 끝났으면 자동으로 기록하고 다음 사이클로 이동
+    if(state.move.turnMode === "FORCED" && state.move.forced.remaining === 0){
+      flushSegment(`P${player}(추가)`);
+      state.move.cycleVol = {1:null, 2:null};
+      const next = state.move.forced.afterNext ?? state.move.cycleStarter;
+      state.move.forced = {player:null, remaining:0, afterNext: null};
+      setActivePlayer(next, "VOL");
+      renderAll();
+    }
+  }
+
+  function computeDistance(player){
+    const goalId = state.goalPicked[player];
+    const g = GOALS.find(v=>v.id===goalId);
+    let sum = 0;
+    const detail = [];
+    TOKEN_TYPES.forEach(t=>{
+      const target = g.target[t];
+      const have = state.inv[player][t];
+      const S = Math.max(0, target - have);
+      const E = Math.max(0, have - target);
+      const contrib = 2*S + 1*E;
+      sum += contrib;
+      detail.push({t, target, have, S, E, contrib});
+    });
+    return {g, sum, detail};
+  }
+
+  function computeAndEndGame(){
+    const d1 = computeDistance(1);
+    const d2 = computeDistance(2);
+    let winner = null;
+    if(d1.sum < d2.sum) winner = 1;
+    else if(d2.sum < d1.sum) winner = 2;
+    else {
+      const tot1 = TOKEN_TYPES.reduce((a,t)=>a+state.inv[1][t],0);
+      const tot2 = TOKEN_TYPES.reduce((a,t)=>a+state.inv[2][t],0);
+      if(tot1 > tot2) winner = 1;
+      else if(tot2 > tot1) winner = 2;
+      else winner = state.move.firstPlayerFromGoal ?? 1;
+    }
+    endGame(winner, "4라운드 종료");
+  }
+
+  function endGame(winner, reason){
+    state.phase = "GAME_OVER";
+    state.winner = winner;
+    state.gameOverReason = reason;
+    addLog(`GAME OVER: Winner=P${winner} (${reason})`);
+    btnScore.disabled = false;
+    openScoreModal();
+  }
+
+  function openScoreModal(){
+    if(state.phase !== "GAME_OVER") return;
+    const d1 = computeDistance(1);
+    const d2 = computeDistance(2);
+    const tot1 = TOKEN_TYPES.reduce((a,t)=>a+state.inv[1][t],0);
+    const tot2 = TOKEN_TYPES.reduce((a,t)=>a+state.inv[2][t],0);
+
+    const table = (player, d, tot) => `
+      <div class="vcPicked" style="margin-top:8px;">
+        <div><b>P${player}</b> 목표: <b>${d.g.id}</b> (점수 ${d.g.score})</div>
+        <div class="small">목표: A${d.g.target.A} B${d.g.target.B} C${d.g.target.C} D${d.g.target.D}</div>
+        <div class="small">보유: A${state.inv[player].A} B${state.inv[player].B} C${state.inv[player].C} D${state.inv[player].D} (합 ${tot})</div>
+      </div>
+      <table class="scoreTable">
+        <thead><tr><th>종류</th><th>목표</th><th>보유</th><th>부족 S</th><th>초과 E</th><th>2S+E</th></tr></thead>
+        <tbody>
+          ${d.detail.map(r=>`<tr><td>${r.t}</td><td>${r.target}</td><td>${r.have}</td><td>${r.S}</td><td>${r.E}</td><td>${r.contrib}</td></tr>`).join("")}
+        </tbody>
+      </table>
+      <div class="pill" style="margin-top:8px;"><strong>거리</strong> · ${d.sum}</div>
+    `;
+
+    scoreBody.innerHTML = `
+      <div class="small">거리 = Σ(2×부족 S + 1×초과 E)</div>
+      ${table(2, d2, tot2)}
+      <hr style="border:0;border-top:1px solid rgba(255,255,255,.10);margin:12px 0;">
+      ${table(1, d1, tot1)}
+      <div class="winner">승자: <b>P${state.winner}</b> · ${state.gameOverReason}</div>
+    `;
+    scoreModal.classList.add("open");
+  }
+
+  // ===== 클릭 처리 =====
+  function onSquareClick(x,y){
+    if(state.phase === "GAME_OVER") return;
+
+    if(state.phase === "R1_PLACE"){
+      if(state.boardTokens[y][x] !== null) return;
+      if(state.r1.placementsLeft <= 0) return;
+
+      const t = state.selectedTokenType[state.activePlayer];
+      if(state.r1.tokenRemaining[t] <= 0) return;
+      if(state.r1.perTypeThisTurn[t] >= 2) return;
+
+      pushUndo();
+
+      state.boardTokens[y][x] = t;
+      state.r1.tokenRemaining[t]--;
+      state.r1.perTypeThisTurn[t]++;
+      state.r1.placementsLeft--;
+      state.r1.placementsThisTurn.push(`${t}@${files[x]}${y+1}`);
+
+      if(state.r1.placementsLeft === 0){
+        addLog(`R1 P${state.activePlayer}: ${state.r1.placementsThisTurn.join(" ")}`);
+        state.r1.turnIndex++;
+        state.activePlayer = (state.activePlayer===1?2:1);
+        state.r1.placementsLeft = 8;
+        state.r1.perTypeThisTurn = {A:0,B:0,C:0,D:0};
+        state.r1.placementsThisTurn = [];
+
+        if(state.r1.turnIndex >= 8){
+          state.phase = "GOAL_PICK";
+          addLog("R1 종료: 목표 선택 시작");
+          openGoalModal();
+        }
+      }
+
+      renderAll();
+      return;
+    }
+
+    if(state.phase === "MOVE_PLAY"){
+      if(state.move.turnMode === "VOL" && state.move.turnLocked) return;
+
+      const pcHere = pieceAt(x,y);
+      const ap = activePiece();
+
+      if(pcHere && pcHere.player === state.activePlayer){
+        computeHints(ap);
+        renderAll();
+        return;
+      }
+
+      const legal = legalMovesForPiece(ap);
+      const found = legal.find(m => m.x===x && m.y===y);
+      if(found){
+        doMove(x,y,found.mode);
+        return;
+      }
+
+      clearHints();
+      renderAll();
+    }
+  }
+
+  // ===== 키보드 =====
+  function handleTokenHotkey(e){
+    const tag = (document.activeElement && document.activeElement.tagName) ? document.activeElement.tagName.toLowerCase() : "";
+    if(tag === "textarea" || tag === "input" || tag === "select") return;
+
+    const key = e.key.toUpperCase();
+    if(!TOKEN_TYPES.includes(key)) return;
+    if(state.phase !== "R1_PLACE") return;
+
+    state.selectedTokenType[state.activePlayer] = key;
+    renderAll();
+  }
+  document.addEventListener("keydown", handleTokenHotkey);
+
+  // Ctrl/Cmd+Z: 마지막 행동 1회 되돌리기
+  function handleUndoHotkey(e){
+    const key = (e.key || "").toLowerCase();
+    const isUndo = (key === "z") && (e.ctrlKey || e.metaKey);
+    if(!isUndo) return;
+
+    // 입력 중인 경우 기본 동작 우선(단, 기보창은 readonly)
+    const tag = (document.activeElement && document.activeElement.tagName) ? document.activeElement.tagName.toLowerCase() : "";
+    if(tag === "input" || tag === "select") return;
+
+    e.preventDefault();
+    popUndo();
+  }
+  document.addEventListener("keydown", handleUndoHotkey);
+
+
+  // ===== 버튼/모달 =====
+  btnEndMove.onclick = endTurn;
+
+  btnRules.onclick = () => { renderRulesText(); rulesModal.classList.add("open"); };
+  btnCloseRules.onclick = () => rulesModal.classList.remove("open");
+  rulesModal.addEventListener("click", (e)=>{ if(e.target === rulesModal) rulesModal.classList.remove("open"); });
+
+  btnUndo.onclick = popUndo;
+
+  btnCopyLog.onclick = async () => {
+    try{ await navigator.clipboard.writeText(logEl.value); alert("복사되었습니다."); }
+    catch{ alert("복사에 실패했습니다."); }
+  };
+
+  btnExport.onclick = () => {
+    const blob = new Blob([logEl.value], {type:"text/plain;charset=utf-8"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "kibo.txt";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  btnReset.onclick = () => { if(confirm("초기화하시겠습니까?")) location.reload(); };
+
+  btnScore.onclick = openScoreModal;
+  btnCloseScore.onclick = () => scoreModal.classList.remove("open");
+  scoreModal.addEventListener("click", (e)=>{ if(e.target === scoreModal) scoreModal.classList.remove("open"); });
+
+  function init(){
+    renderRulesText();
+    addLog("시작: R1 토큰 설치 (P1 선)");
+    renderAll();
+  }
+  init();
+})();
+</script>
+</body>
+</html>
